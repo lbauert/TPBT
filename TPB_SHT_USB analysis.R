@@ -1,11 +1,11 @@
 ######## installing the correct packages
-install.packages("psych")
-install.packages("ggplot2")
-install.packages("reshape")
-install.packages("dplyr")
-install.packages("lme4")
-install.packages("nlme")
-install.packages("Hmisc")
+# install.packages("psych")
+# install.packages("ggplot2")
+# install.packages("reshape")
+# install.packages("dplyr")
+# install.packages("lme4")
+# install.packages("nlme")
+# install.packages("Hmisc")
 library(psych)
 library(ggplot2)
 library(reshape)
@@ -13,11 +13,16 @@ library(dplyr)
 library(lme4)
 library(nlme)
 
+# please make sure to read in your data table!
+# other wise I can't really replicate your code
+
+bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
+
 ####### Check dataset
 dim(bbx3)
 names(bbx3)
 #######renameing Participant ID to PID, helps later
-colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
+#colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
 names(bbx3)
 ####### Make new datasets per construct
 AA <- bbx3 %>% group_by(Sweet) %>% 
@@ -80,10 +85,10 @@ fitter<-function(x){
   x$Sweet<-as.factor(x$Sweet)
   intercept<-gls(measure~1, data=x, method="ML", na.action=na.exclude)
   randomIntercept<-lme(measure~1, data=x, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
-  timeRI<-update(randomIntercept, .~.+time)
-  timeRS<-update(timeRI, random=~time|PID)
-  timeCov<-update(timeRS, .~.+Sweet)
-  results <-list("basic"=summary(timeCov), "better?"= anova(intercept, randomIntercept, timeRI, timeRS, timeCov))
+  timeRI<-lme(measure~1+time, data=x, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  timeRS<-lme(measure~1+time, data=x, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  timeCov<-lme(measure~1+time*Sweet, data=x, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  results <-list("model"=timeCov, "basic"=summary(timeCov), "better?"= anova(intercept, randomIntercept, timeRI, timeRS, timeCov))
   return(results)
 }
 lapply(DL_long, fitter)
@@ -99,12 +104,20 @@ plotter<-function(x){
   return(plot2)
 }
 lapply(DL_long, plotter)
+########testing potential significant##########
+plotter(DL_long$pbc)
+fitter(DL_long$pbc)
 ####### test normality
-AA_long<-lengthen(AA)
-intercept<-gls(attitude~1, data=AA_long, method="ML", na.action=na.exclude)
-randomIntercept<-lme(
-  attitude~1, data=AA_long, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
-timeRI<-update(randomIntercept, .~.+time_bev)
-timeRS<-update(timeRI, random=~time_bev|PID)
-timeCov<-update(timeRS, .~.+Sweet)
+fitter_plot<-function(x){
+  x$Sweet<-as.factor(x$Sweet)
+  intercept<-gls(measure~1, data=x, method="ML", na.action=na.exclude)
+  randomIntercept<-lme(measure~1, data=x, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  timeRI<-update(randomIntercept, .~.+time)
+  timeRS<-update(timeRI, random=~time|PID)
+  timeCov<-update(timeRS, .~.+Sweet)
+  
+  results <-list("basic"=summary(timeCov), "better?"= anova(intercept, randomIntercept, timeRI, timeRS, timeCov), qqnorm(timeCov, ~ resid(., type = "p")))
+  return(results)
+}
+fitter_plot(DL_long$pbc)
 qqnorm(timeCov, ~ resid(., type = "p"))
