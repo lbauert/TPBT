@@ -6,6 +6,11 @@
 # install.packages("lme4")
 # install.packages("nlme")
 # install.packages("Hmisc")
+install.packages("reghelper")
+
+require("reghelper")
+require("lattice")
+require("Hmisc")
 library(psych)
 library(ggplot2)
 library(reshape)
@@ -16,7 +21,7 @@ library(nlme)
 # please make sure to read in your data table!
 # other wise I can't really replicate your code
 
-bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
+#bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
 
 ####### Check dataset
 dim(bbx3)
@@ -110,4 +115,54 @@ fitter(DL_long$bi)
 
 plotter(DL_long$aa)
 fitter(DL_long$aa)
-####### test normality
+###### test normality
+model_list2<-fitter(DL_long$bi)
+model_list2[1]
+Plot.Model.F.Linearity <-plot(resid(model_list$model), DL_long$bc$measure)
+
+DL_long$bi$timeCov.Res<- residuals(model_list$model) #extracts the residuals and places them in a new column in our original data table
+DL_long$bi$Abs.timeCov.Res <-abs(DL_long$bi$timeCov.Res) #creates a new column with the absolute value of the residuals
+DL_long$bi$timeCov.Res2 <- DL_long$bi$Abs.timeCov.Res^2 #squares the absolute values of the residuals to provide the more robust estimate
+Levene.timeCov <- lm(timeCov.Res2 ~ PID, data=DL_long$bi) #ANOVA of the squared residuals
+anova(Levene.timeCov) #displays the results
+
+Plot.timeCov <- plot(model_list$model) #creates a fitted vs residual plot
+Plot.timeCov
+
+outcome<-DL_long$bi$measure[complete.cases(DL_long$bi$measure)]
+length(outcome)
+plot(model_list2$model)
+
+qqnorm(resid(model_list$model))
+qqline(resid(model_list$model))
+####### getting standardized betas
+beta (model_list$model)
+
+
+###### BMI analysis
+mean (bbx3$w1_BMI, na.rm=TRUE)
+sd(bbx3$w1_BMI, na.rm=TRUE)
+t.test(bbx3$w1_BMI~bbx3$Sweet)
+
+fitter_BMI<-function(x){
+  x$Sweet<-as.factor(x$Sweet)
+  intercept<-gls(measure~1, data=x, method="ML", na.action=na.exclude)
+  randomIntercept<-lme(measure~1, data=x, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  timeRI<-lme(measure~1+time, data=x, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  timeRS<-lme(measure~1+time, data=x, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  timeCov<-lme(measure~1+time*Sweet, data=x, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  time_BMICov<-lme(measure~1+time*Sweet*w1_BMI, data=x, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+  results <-list("model"=time_BMICov, "basic"=summary(time_BMICov), "better?"= anova(timeCov, time_BMICov))
+  return(results)
+}
+
+lapply(DL_long, fitter_BMI)
+####### interesting results
+fit<-fitter_BMI(DL_long$pbc)
+fit
+
+ggplot(DL_long$pbc, aes(w1_BMI,measure, color=Sweet)) +
+  geom_point(shape=1)+
+  facet_grid(~time)+
+  geom_smooth(method=lm,   # Add linear regression lines
+              se=FALSE)    # Don't add shaded confidence region
