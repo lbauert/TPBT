@@ -105,19 +105,9 @@ plotter<-function(x){
 }
 lapply(DL_long, plotter)
 ########testing potential significant##########
-plotter(DL_long$pbc)
-fitter(DL_long$pbc)
+plotter(DL_long$bi)
+fitter(DL_long$bi)
+
+plotter(DL_long$aa)
+fitter(DL_long$aa)
 ####### test normality
-fitter_plot<-function(x){
-  x$Sweet<-as.factor(x$Sweet)
-  intercept<-gls(measure~1, data=x, method="ML", na.action=na.exclude)
-  randomIntercept<-lme(measure~1, data=x, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
-  timeRI<-update(randomIntercept, .~.+time)
-  timeRS<-update(timeRI, random=~time|PID)
-  timeCov<-update(timeRS, .~.+Sweet)
-  
-  results <-list("basic"=summary(timeCov), "better?"= anova(intercept, randomIntercept, timeRI, timeRS, timeCov), qqnorm(timeCov, ~ resid(., type = "p")))
-  return(results)
-}
-fitter_plot(DL_long$pbc)
-qqnorm(timeCov, ~ resid(., type = "p"))
