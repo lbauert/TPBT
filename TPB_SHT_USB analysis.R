@@ -1,14 +1,13 @@
 ######## installing the correct packages
-install.packages("psych")
-install.packages("ggplot2")
-install.packages("reshape")
-install.packages("dplyr")
-install.packages("lme4")
-install.packages("nlme")
-install.packages("Hmisc")
-install.packages("reghelper")
-install.packages("readxl")
 
+# install.packages("psych")
+# install.packages("ggplot2")
+# install.packages("reshape")
+# install.packages("dplyr")
+# install.packages("lme4")
+# install.packages("nlme")
+# install.packages("Hmisc")
+# install.packages("reghelper")
 
 require("reghelper")
 require("lattice")
@@ -24,16 +23,21 @@ library(readxl)
 # please make sure to read in your data table!
 # other wise I can't really replicate your code
 
+
+ bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
+ bbx3$Sweet<-as.factor(bbx3$Sweet)
+
+
 #what the computer had been running for the data
-bbx3<- read_excel("Desktop/Burger Lab/Honors Thesis/lia_bbxdata_020119_full.xlsx", 
-                                     sheet = "calculated_data3")
+#bbx3<- read_excel("~/Google Drive/Lias_stuff/data/lia_bbxdata_020119_full.xlsx", sheet = "calculated_data3")
 #####I tried to link it directly to the drive sheet but had issues so if you know how to get this sheet from google 
 #####than it would be the same data I am using.  
+
 ####### Check dataset
 dim(bbx3)
 names(bbx3)
 #######renameing Participant ID to PID, helps later
-colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
+#colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
 names(bbx3)
 ####### Make new datasets per construct
 AA <- bbx3 %>% group_by(Sweet) %>% 
@@ -90,7 +94,7 @@ lengthen <- function(x){
 }
 ######## Applying the long function to the dataset
 DL_long <- lapply(DL, lengthen)
-DL_long
+# DL_long
 ######## Function for fitting the data to a model
 fitter<-function(x){
   x$Sweet<-as.factor(x$Sweet)
@@ -124,23 +128,23 @@ fitter(DL_long$aa)
 ###### test normality
 model_list2<-fitter(DL_long$bi)
 model_list2[1]
-Plot.Model.F.Linearity <-plot(resid(model_list$model), DL_long$bc$measure)
+Plot.Model.F.Linearity <-plot(resid(model_list2$model), DL_long$bi$measure)
 
-DL_long$bi$timeCov.Res<- residuals(model_list$model) #extracts the residuals and places them in a new column in our original data table
+DL_long$bi$timeCov.Res<- residuals(model_list2$model) #extracts the residuals and places them in a new column in our original data table
 DL_long$bi$Abs.timeCov.Res <-abs(DL_long$bi$timeCov.Res) #creates a new column with the absolute value of the residuals
 DL_long$bi$timeCov.Res2 <- DL_long$bi$Abs.timeCov.Res^2 #squares the absolute values of the residuals to provide the more robust estimate
 Levene.timeCov <- lm(timeCov.Res2 ~ PID, data=DL_long$bi) #ANOVA of the squared residuals
 anova(Levene.timeCov) #displays the results
 
-Plot.timeCov <- plot(model_list$model) #creates a fitted vs residual plot
+Plot.timeCov <- plot(model_list2$model) #creates a fitted vs residual plot
 Plot.timeCov
 
 outcome<-DL_long$bi$measure[complete.cases(DL_long$bi$measure)]
 length(outcome)
 plot(model_list2$model)
 
-qqnorm(resid(model_list$model))
-qqline(resid(model_list$model))
+qqnorm(resid(model_list2$model))
+qqline(resid(model_list2$model))
 ####### getting standardized betas
 
 beta (model_list2$model)
@@ -165,11 +169,25 @@ fitter_BMI<-function(x){
 
 lapply(DL_long, fitter_BMI)
 ####### interesting results
-fit<-fitter_BMI(DL_long$pbc)
+fit<-fitter_BMI(DL_long$bi)
 fit
+beta(fit$model)
 
-ggplot(DL_long$pbc, aes(w1_BMI,measure, color=Sweet)) +
-  geom_point(shape=1)+
-  facet_grid(~time)+
-  geom_smooth(method=lm,   # Add linear regression lines
-              se=FALSE)    # Don't add shaded confidence region
+plotter_bmi<-function(x){
+  x$Sweet<-as.factor(x$Sweet)
+  plot1<-ggplot(x, aes(w1_BMI,measure, color=Sweet)) +
+    geom_point(shape=1)+
+    facet_grid(~time)+
+    geom_smooth(method=lm,   # Add linear regression lines
+                se=T)    # Don't add shaded confidence region
+  return(plot1)
+}
+names(DL_long)
+plotter_bmi(DL_long$bi)
+
+
+DL_long$bi$Sweet<-as.factor(DL_long$bi$Sweet)
+plot1<-ggplot(DL_long$bi, aes(time, measure, color=Sweet)) + geom_boxplot()
+plot1
+describeBy(DL_long$bi$measure, DL_long$bi$time)
+describeBy(DL_long$bi$measure, DL_long$bi$Sweet)
