@@ -1,4 +1,5 @@
 ######## installing the correct packages
+<<<<<<< HEAD
 # install.packages("psych")
 # install.packages("ggplot2")
 # install.packages("reshape")
@@ -7,6 +8,18 @@
 # install.packages("nlme")
 # install.packages("Hmisc")
 # install.packages("reghelper")
+=======
+install.packages("psych")
+install.packages("ggplot2")
+install.packages("reshape")
+install.packages("dplyr")
+install.packages("lme4")
+install.packages("nlme")
+install.packages("Hmisc")
+install.packages("reghelper")
+install.packages("readxl")
+
+>>>>>>> 17a5241ba42a5590258265c0bc63e75584d38c0c
 
 require("reghelper")
 require("lattice")
@@ -17,18 +30,27 @@ library(reshape)
 library(dplyr)
 library(lme4)
 library(nlme)
+library(readxl)
 
 # please make sure to read in your data table!
 # other wise I can't really replicate your code
 
+<<<<<<< HEAD
 bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
 bbx3$Sweet<-as.factor(bbx3$Sweet)
 
+=======
+#what the computer had been running for the data
+bbx3<- read_excel("Desktop/Burger Lab/Honors Thesis/lia_bbxdata_020119_full.xlsx", 
+                                     sheet = "calculated_data3")
+#####I tried to link it directly to the drive sheet but had issues so if you know how to get this sheet from google 
+#####than it would be the same data I am using.  
+>>>>>>> 17a5241ba42a5590258265c0bc63e75584d38c0c
 ####### Check dataset
 dim(bbx3)
 names(bbx3)
 #######renameing Participant ID to PID, helps later
-#colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
+colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
 names(bbx3)
 ####### Make new datasets per construct
 AA <- bbx3 %>% group_by(Sweet) %>% 
@@ -137,6 +159,10 @@ plot(model_list2$model)
 qqnorm(resid(model_list2$model))
 qqline(resid(model_list2$model))
 ####### getting standardized betas
+<<<<<<< HEAD
+=======
+
+>>>>>>> 17a5241ba42a5590258265c0bc63e75584d38c0c
 beta (model_list2$model)
 
 
