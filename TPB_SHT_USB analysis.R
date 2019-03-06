@@ -6,7 +6,7 @@
 # install.packages("lme4")
 # install.packages("nlme")
 # install.packages("Hmisc")
-install.packages("reghelper")
+# install.packages("reghelper")
 
 require("reghelper")
 require("lattice")
@@ -21,7 +21,8 @@ library(nlme)
 # please make sure to read in your data table!
 # other wise I can't really replicate your code
 
-#bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
+bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
+bbx3$Sweet<-as.factor(bbx3$Sweet)
 
 ####### Check dataset
 dim(bbx3)
@@ -133,10 +134,10 @@ outcome<-DL_long$bi$measure[complete.cases(DL_long$bi$measure)]
 length(outcome)
 plot(model_list2$model)
 
-qqnorm(resid(model_list$model))
-qqline(resid(model_list$model))
+qqnorm(resid(model_list2$model))
+qqline(resid(model_list2$model))
 ####### getting standardized betas
-beta (model_list$model)
+beta (model_list2$model)
 
 
 ###### BMI analysis
