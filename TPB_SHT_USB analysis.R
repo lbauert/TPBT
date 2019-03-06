@@ -1,11 +1,11 @@
 ######## installing the correct packages
-# install.packages("psych")
-# install.packages("ggplot2")
-# install.packages("reshape")
-# install.packages("dplyr")
-# install.packages("lme4")
-# install.packages("nlme")
-# install.packages("Hmisc")
+install.packages("psych")
+install.packages("ggplot2")
+install.packages("reshape")
+install.packages("dplyr")
+install.packages("lme4")
+install.packages("nlme")
+install.packages("Hmisc")
 install.packages("reghelper")
 
 require("reghelper")
@@ -27,7 +27,7 @@ library(nlme)
 dim(bbx3)
 names(bbx3)
 #######renameing Participant ID to PID, helps later
-#colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
+colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
 names(bbx3)
 ####### Make new datasets per construct
 AA <- bbx3 %>% group_by(Sweet) %>% 
@@ -136,7 +136,8 @@ plot(model_list2$model)
 qqnorm(resid(model_list$model))
 qqline(resid(model_list$model))
 ####### getting standardized betas
-beta (model_list$model)
+
+beta (model_list2$model)
 
 
 ###### BMI analysis
