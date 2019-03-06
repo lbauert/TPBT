@@ -7,6 +7,8 @@ install.packages("lme4")
 install.packages("nlme")
 install.packages("Hmisc")
 install.packages("reghelper")
+install.packages("readxl")
+
 
 require("reghelper")
 require("lattice")
@@ -17,12 +19,16 @@ library(reshape)
 library(dplyr)
 library(lme4)
 library(nlme)
+library(readxl)
 
 # please make sure to read in your data table!
 # other wise I can't really replicate your code
 
-#bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
-
+#what the computer had been running for the data
+bbx3<- read_excel("Desktop/Burger Lab/Honors Thesis/lia_bbxdata_020119_full.xlsx", 
+                                     sheet = "calculated_data3")
+#####I tried to link it directly to the drive sheet but had issues so if you know how to get this sheet from google 
+#####than it would be the same data I am using.  
 ####### Check dataset
 dim(bbx3)
 names(bbx3)
