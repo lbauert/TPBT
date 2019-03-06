@@ -1,34 +1,43 @@
-install.packages("dplyr")
-install.packages("ggpubr")
+# Code for Lia's thesis project
+# 3-1-2019
+
+# install.packages("dplyr")
+# install.packages("ggpubr")
 library(dplyr)
 library(ggpubr)
 
+#read in the data
+data<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill=T)
+#check the head and tail
 
+head(data)
+names(data)
 ### Check the normality of data- histogram with normal curve plotted over it for reference
-x <- bbx3$w2_tpbq_assigned_ia
+x <- data$w2_tpbq_assigned_ia
 h<-hist(x, breaks=10, col="red", xlab="TPB construct", 
         main="W2 Assigned- IA", probability = TRUE) 
 curve(dnorm(x, mean=mean(x), sd=sd(x)), add=TRUE)
 
 ###Chi-squared on control variables: age, gender, race, ethnicity
 
-sweet_gender <- table(bbx3$Sweet, bbx3$gender)
-View(sweet_gender)
+sweet_gender <- table(data$Sweet, data$gender)
+sweet_gender
 chisq.test(sweet_gender)
 
-sweet_race <- table(bbx3$Sweet, bbx3$race)
+sweet_race <- table(data$Sweet, data$race)
+sweet_race
 chisq.test(sweet_race)
 
-sweet_ethnicity <- table(bbx3$Sweet, bbx3$ethnicity)
+sweet_ethnicity <- table(data$Sweet, data$ethnicity)
+sweet_ethnicity
 chisq.test(sweet_ethnicity)
 
-sweet_age <- table(bbx3$Sweet, bbx3$age)
-chisq.test(sweet_age)
+
 
 ###make baby tables for group averages across TPB constructs
-group_avgs_ssb_a_t1_t2 <- bbx2 %>% group_by(Sweet) %>% 
-  select(`Participant ID (bbx_###)` ,Sweet, b5_tpbq_ssb_a, w1_tpbq_ssb_a) %>%
-  mutate(avgs_a_t1_t2 = mean(b5_tpbq_ssb_a - w1_tpbq_ssb_a, na.rm = T))
+group_avgs_ssb_aa_t1_t2 <- data %>% group_by(Sweet) %>% 
+  select(`PID` ,Sweet, b5_tpbq_ssb_aa, w1_tpbq_ssb_aa) %>%
+  mutate(avgs_a_t1_t2 = mean(b5_tpbq_ssb_aa - w1_tpbq_ssb_aa, na.rm = T))
 
 group_avgs_ssb_sn_t1_t2 <- bbx2 %>% group_by(Sweet) %>% 
   select(`Participant ID (bbx_###)` ,Sweet, b5_tpbq_ssb_sn, w1_tpbq_ssb_sn) %>%
