@@ -8,6 +8,7 @@ install.packages("lme4")
 install.packages("nlme")
 install.packages("Hmisc")
 install.packages("reghelper")
+install.packages("MuMIn")
 
 require("reghelper")
 require("lattice")
@@ -18,7 +19,7 @@ library(reshape)
 library(dplyr)
 library(lme4)
 library(nlme)
-library(readxl)
+library (MuMIn)
 
 # please make sure to read in your data table!
 # other wise I can't really replicate your code
@@ -37,14 +38,14 @@ bbx3$Sweet<-as.factor(bbx3$Sweet)
 dim(bbx3)
 names(bbx3)
 #######renameing Participant ID to PID, helps later
-#colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
+colnames(bbx3)[colnames(bbx3)=="Participant ID (bbx_###)"] <- "PID"
 names(bbx3)
 ####### Make new datasets per construct
 AA <- bbx3 %>% group_by(Sweet) %>% 
   select('PID','w1_BMI', 'w1_BMI_status', 
          'age', 'ethnicity', 'race', 
          'gender', 'w1_tpbq_ssb_aa', 
-         'b5_tpbq_usb_aa', 'w2_tpbq_ssb_aa')
+         'b5_tpbq_ssb_aa', 'w2_tpbq_ssb_aa')
 dim(AA)
 names(AA)
 
@@ -121,11 +122,16 @@ plotter<-function(x){
 }
 lapply(DL_long, plotter)
 ########testing potential significant##########
-plotter(DL_long$bi)
+fitter(DL_long$uaa)
+model_2<-fitter(DL_long$usn)
+beta(model_2$model, y=F)
+plotter(DL_long$usn)
 fitter(DL_long$bi)
 
-plotter(DL_long$aa)
 fitter(DL_long$aa)
+
+plotter(DL_long$pbc)
+plotter(DL_long$upbc)
 ###### test normality
 model_list2<-fitter(DL_long$bi)
 model_list2[1]
@@ -146,8 +152,60 @@ plot(model_list2$model)
 
 qqnorm(resid(model_list2$model))
 qqline(resid(model_list2$model))
+
+
+####### transforming variables that failed normality test
+DL_long$ia$measure.1 <- DL_long$ia$measure+1
+DL_long$ia$measure.log <- log10(DL_long$ia$measure.1)
+DL_long$ia$measure.sqrt <- sqrt(DL_long$ia$measure)
+
+intercept<-gls(measure.sqrt~1, data=DL_long$ia, method="ML", na.action=na.exclude)
+randomIntercept<-lme(measure.lsqrt~1, data=DL_long$ia, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+timeRI<-lme(measure.sqrt~1+time, data=DL_long$ia, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+timeRS<-lme(measure.sqrt~1+time, data=DL_long$ia, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+timeCov<-lme(measure.sqrt~1+time*Sweet, data=DL_long$ia, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+results <-list("model"=timeCov, "basic"=summary(timeCov), "better?"= anova(intercept, randomIntercept, timeRI, timeRS, timeCov))
+View(results)
+summary(timeCov)
+
+qqnorm(resid(timeCov))
+qqline(resid(timeCov))
+
+r.squaredGLMM(model_list_aa$model)
+r.squaredGLMM(timeCov)
+
+
+DL_long$sn$measure.1 <- DL_long$sn$measure+1
+DL_long$sn$measure.log <- log10(DL_long$sn$measure.1)
+
+
+intercept<-gls(measure.log~1, data=DL_long$sn, method="ML", na.action=na.exclude)
+randomIntercept<-lme(measure.log~1, data=DL_long$sn, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+timeRI<-lme(measure.log~1+time, data=DL_long$sn, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+timeRS<-lme(measure.log~1+time, data=DL_long$sn, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+timeCov<-lme(measure.log~1+time*Sweet, data=DL_long$sn, random=~time|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
+results <-list("model"=timeCov, "basic"=summary(timeCov), "better?"= anova(intercept, randomIntercept, timeRI, timeRS, timeCov))
+View(results)
+summary(timeCov)
+
+qqnorm(resid(timeCov))
+qqline(resid(timeCov))
+
+r.squaredGLMM(model_list_sn$model)
+r.squaredGLMM(timeCov)
+
+DL_long$sn$timeCov.Res<- residuals(timeCov) #extracts the residuals and places them in a new column in our original data table
+DL_long$bi$Abs.timeCov.Res <-abs(DL_long$sn$timeCov.Res) #creates a new column with the absolute value of the residuals
+DL_long$bi$timeCov.Res2 <- DL_long$sn$Abs.timeCov.Res^2 #squares the absolute values of the residuals to provide the more robust estimate
+Levene.timeCov <- lm(timeCov.Res2 ~ PID, data=DL_long$sn) #ANOVA of the squared residuals
+anova(Levene.timeCov) #displays the results
+
+####### finalized
+DL_long$sn$measure.in <- abs(DL_long$sn$measure)^(-1)
+
 ####### getting standardized betas
 model_list2<-fitter(DL_long$bi)
+
 beta (model_list2$model, y=F)
 ####### getting SD
 SD <-0.05651842 * sqrt(205)
@@ -181,15 +239,41 @@ plotter_bmi<-function(x){
     geom_point(shape=1)+
     facet_grid(~time)+
     geom_smooth(method=lm,   # Add linear regression lines
-                se=T)    # Don't add shaded confidence region
+                se=F)    # Don't add shaded confidence region
   return(plot1)
 }
-names(DL_long)
-plotter_bmi(DL_long$bi)
 
+names(DL_long)
+plotter_bmi(DL_long$upbc)
+
+lapply(DL_long, plotter_bmi)
 
 DL_long$aa$Sweet<-as.factor(DL_long$aa$Sweet)
 plot1<-ggplot(DL_long$bi, aes(time, measure, color=Sweet)) + geom_boxplot()
 plot1
 describeBy(DL_long$bi$measure, DL_long$bi$time)
 describeBy(DL_long$bi$measure, DL_long$bi$Sweet)
+
+#######Check normality
+model_list2<-fitter_BMI(DL_long$pbc)
+model_list2[1]
+Plot.Model.F.Linearity <-plot(resid(model_list2$model), DL_long$pbc$measure)
+
+DL_long$pbc$timeCov.Res<- residuals(model_list2$model) #extracts the residuals and places them in a new column in our original data table
+DL_long$pbc$Abs.timeCov.Res <-abs(DL_long$pbc$timeCov.Res) #creates a new column with the absolute value of the residuals
+DL_long$pbc$timeCov.Res2 <- DL_long$pbc$Abs.timeCov.Res^2 #squares the absolute values of the residuals to provide the more robust estimate
+Levene.timeCov <- lm(timeCov.Res2 ~ PID, data=DL_long$pbc) #ANOVA of the squared residuals
+anova(Levene.timeCov) #displays the results
+
+Plot.timeCov <- plot(model_list2$model) #creates a fitted vs residual plot
+Plot.timeCov
+
+outcome<-DL_long$pbc$measure[complete.cases(DL_long$pb$measure)]
+length(outcome)
+plot(model_list2$model)
+
+qqnorm(resid(model_list2$model))
+qqline(resid(model_list2$model))
+####### Prettier Graphs
+plotter(DL_long$aa)+labs(x="Time", y="Behavioral Intention")+theme_classic()
+plotter_bmi(DL_long$ubi)+labs(x="BMI", y="Behavioral Intention")+theme_bw()
