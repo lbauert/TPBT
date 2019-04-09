@@ -28,7 +28,7 @@ library(car)
 # other wise I can't really replicate your code
 
 
-bbx3<-read.table("~/Google Drive/Lias_stuff/data/variables_interest.csv", sep=",", header=T, fill = T)
+bbx3<-read.table("~/Google Drive/Lias_stuff/data/bbx.csv", sep=",", header=T, fill = T)
 bbx3$Sweet<-as.factor(bbx3$Sweet)
 
 
@@ -51,7 +51,7 @@ AA <- bbx3 %>% group_by(Sweet) %>%
           'w2_tpbq_ssb_aa')
 dim(AA)
 names(AA)
-
+######affective attitude toward soda
 UAA <- bbx3 %>% group_by(Sweet) %>% 
   select('PID','w1_BMI', 'w1_BMI_status', 
          'age', 'ethnicity', 'race', 
@@ -59,7 +59,7 @@ UAA <- bbx3 %>% group_by(Sweet) %>%
          'w2_tpbq_usb_aa')
 dim(AA)
 names(AA)
-
+######affective attitude toward water
 
 IA <- bbx3 %>% group_by(Sweet) %>% 
   select('PID','w1_BMI', 'w1_BMI_status', 
@@ -162,7 +162,7 @@ plotter<-function(x){
   return(plot2)
 }
 lapply(DL_long, plotter)
-####### Interesting data: pbc, ubc, and ubi
+####### Interesting data: usn, pbc, ubc, and ubi
 ####### normality check
 model_list2<-fitter(DL_long$ubi)
 model_list2[1]
@@ -184,7 +184,7 @@ plot(model_list2$model)
 qqnorm(resid(model_list2$model))
 qqline(resid(model_list2$model))
 
-###### transformations for... upbc
+###### transformations for... upbc, transformations were not successful to correct for normality assumption violation
 DL_long$upbc$measure.1 <- DL_long$upbc$measure+1
 DL_long$upbc$measure.log <- log10(DL_long$upbc$measure.1)
 DL_long$upbc$measure.ln <- log(DL_long$upbc$measure.1)
@@ -286,7 +286,8 @@ DL_long$bi$Abs.timeCov.Res <-abs(DL_long$bi$timeCov.Res) #creates a new column w
 DL_long$bi$timeCov.Res2 <- DL_long$bi$Abs.timeCov.Res^2 #squares the absolute values of the residuals to provide the more robust estimate
 Levene.timeCov <- lm(timeCov.Res2 ~ PID, data=DL_long$bi) #ANOVA of the squared residuals
 anova(Levene.timeCov) #displays the results
-###### BMI
+
+###### BMI model
 fitter_BMI<-function(x){
   x$Sweet<-as.factor(x$Sweet)
   intercept<-gls(measure~1, data=x, method="ML", na.action=na.exclude)
@@ -311,7 +312,7 @@ plotter_bmi<-function(x){
   return(plot1)
 }
 lapply(DL_long, plotter_bmi)
-######interesting BMI, aa and bi
+######interesting BMI, aa, usn, pbc, upbc and ubi
 model_list2<-fitter_BMI(DL_long$aa)
 model_list2[1]
 Plot.Model.F.Linearity <-plot(resid(model_list2$model), DL_long$pbc$measure)
@@ -332,6 +333,7 @@ plot(model_list2$model)
 qqnorm(resid(model_list2$model))
 qqline(resid(model_list2$model))
 
+###### transformation of BMI to correct for normality, again did not correct for normality assumption violation
 DL_long$aa$measure.in <- abs(DL_long$aa$measure)^(-1) 
 intercept<-gls(measure.in~1, data=DL_long$aa, method="ML", na.action=na.exclude)
 randomIntercept<-lme(measure.in~1, data=DL_long$aa, random=~1|PID, method="ML", na.action=na.exclude, control=list(opt="optim"))
@@ -374,6 +376,7 @@ DL_long$bi$Abs.time_BMICov.Res <-abs(DL_long$bi$time_BMICov.Res) #creates a new 
 DL_long$bi$time_BMICov.Res2 <- DL_long$bi$Abs.time_BMICov.Res^2 #squares the absolute values of the residuals to provide the more robust estimate
 Levene.timeCov <- lm(time_BMICov.Res2 ~ PID, data=DL_long$bi) #ANOVA of the squared residuals
 anova(Levene.timeCov) #displays the results
+
 ###### standardized betas
 model1 <- fitter(DL_long$ubi)
 beta(model1$model, y=F)
